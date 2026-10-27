@@ -11,11 +11,17 @@ This FastAPI backend powers Food Verse AI, providing:
 - Kitchen & Restaurant Hygiene Auditor
 """
 
+import os
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+from classifier import classifier_service
+
+logger = logging.getLogger("foodverse-api")
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -131,7 +137,8 @@ def get_health():
         "service": "FastAPI",
         "uptime": "active",
         "latency_ms": 12,
-        "vision_model_status": "loaded",
+        "vision_model_status": "loaded (MobileNetV3-Large 15-class)" if classifier_service.is_loaded else "unloaded",
+        "vision_model_classes": len(classifier_service.classes) if classifier_service.is_loaded else 0,
         "database_status": "in-memory (active)",
     }
 
@@ -260,6 +267,52 @@ def recognize_food(payload: FoodRecognizeRequest):
             "chef_note": "Balanced macro distribution with wholesome essential nutrients."
         }
     }
+
+
+@app.post("/api/recognize-upload")
+async def recognize_uploaded_food(file: UploadFile = File(...)):
+    """
+    POST /api/recognize-upload
+    Real-data multimodal vision inference endpoint.
+    Accepts multipart food photo upload (PNG, JPG, JPEG, WEBP)
+    and predicts vegetable class using trained MobileNetV3-Large model.
+    """
+    if not file or not file.filename:
+        raise HTTPException(status_code=400, detail="No image file provided in request.")
+
+    valid_extensions = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".jfif"}
+    _, ext = os.path.splitext(file.filename.lower())
+    is_image_mime = file.content_type and file.content_type.startswith("image/")
+    if not is_image_mime and ext not in valid_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{ext or file.content_type}'. Please upload a valid image file (PNG, JPG, WEBP)."
+        )
+
+    try:
+        contents = await file.read()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file.")
+
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded image file is empty.")
+
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Uploaded file exceeds 10 MB maximum limit.")
+
+    try:
+        result = classifier_service.predict_image(contents)
+        result["filename"] = file.filename
+        result["timestamp"] = datetime.now(timezone.utc).isoformat()
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except RuntimeError as re:
+        logger.error(f"Runtime error during inference: {re}")
+        raise HTTPException(status_code=503, detail="Neural vision model is currently unavailable.")
+    except Exception as e:
+        logger.error(f"Inference error on {file.filename}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during neural inference.")
 
 
 @app.post("/api/freshness")

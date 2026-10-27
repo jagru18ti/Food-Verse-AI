@@ -1,0 +1,530 @@
+{
+  "verified_timestamp": "2026-10-26T15:34:31Z",
+  "model_architecture": "MobileNetV3-Large",
+  "checkpoint_file": "C:\\Users\\jagru\\.gemini\\antigravity-ide\\brain\\30c354f7-2262-44b3-94b8-d33b57b5661c\\scratch\\checkpoints\\best_model.pt",
+  "checkpoint_size_bytes": 17087497,
+  "checkpoint_size_mb": 16.3,
+  "num_classes": 15,
+  "classes": [
+    "Bean",
+    "Bitter_Gourd",
+    "Bottle_Gourd",
+    "Brinjal",
+    "Broccoli",
+    "Cabbage",
+    "Capsicum",
+    "Carrot",
+    "Cauliflower",
+    "Cucumber",
+    "Papaya",
+    "Potato",
+    "Pumpkin",
+    "Radish",
+    "Tomato"
+  ],
+  "test_dataset_path": "C:\\Users\\jagru\\.cache\\kagglehub\\datasets\\misrakahmed\\vegetable-image-dataset\\versions\\1\\Vegetable Images\\test",
+  "total_test_samples": 3000,
+  "test_top1_accuracy_pct": 99.8667,
+  "test_top3_accuracy_pct": 99.9667,
+  "macro_precision_pct": 99.8677,
+  "macro_recall_pct": 99.8667,
+  "macro_f1": 0.9987,
+  "avg_cpu_latency_ms": 24.28,
+  "confusion_matrix": [
+    [
+      199,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      198,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      199,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      200
+    ]
+  ],
+  "per_class_metrics": {
+    "Bean": {
+      "support": 200,
+      "tp": 199,
+      "fp": 0,
+      "fn": 1,
+      "recall_pct": 99.5,
+      "precision_pct": 100.0,
+      "f1_score": 0.9975
+    },
+    "Bitter_Gourd": {
+      "support": 200,
+      "tp": 198,
+      "fp": 0,
+      "fn": 2,
+      "recall_pct": 99.0,
+      "precision_pct": 100.0,
+      "f1_score": 0.995
+    },
+    "Bottle_Gourd": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Brinjal": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Broccoli": {
+      "support": 200,
+      "tp": 200,
+      "fp": 1,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 99.5025,
+      "f1_score": 0.9975
+    },
+    "Cabbage": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Capsicum": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Carrot": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Cauliflower": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Cucumber": {
+      "support": 200,
+      "tp": 200,
+      "fp": 1,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 99.5025,
+      "f1_score": 0.9975
+    },
+    "Papaya": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Potato": {
+      "support": 200,
+      "tp": 199,
+      "fp": 0,
+      "fn": 1,
+      "recall_pct": 99.5,
+      "precision_pct": 100.0,
+      "f1_score": 0.9975
+    },
+    "Pumpkin": {
+      "support": 200,
+      "tp": 200,
+      "fp": 2,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 99.0099,
+      "f1_score": 0.995
+    },
+    "Radish": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    },
+    "Tomato": {
+      "support": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "recall_pct": 100.0,
+      "precision_pct": 100.0,
+      "f1_score": 1.0
+    }
+  },
+  "misclassifications_count": 4,
+  "misclassified_samples": [
+    {
+      "sample_index": 166,
+      "filepath": "C:\\Users\\jagru\\.cache\\kagglehub\\datasets\\misrakahmed\\vegetable-image-dataset\\versions\\1\\Vegetable Images\\test\\Bean\\0635.jpg",
+      "filename": "0635.jpg",
+      "true_class": "Bean",
+      "true_class_idx": 0,
+      "predicted_class": "Cucumber",
+      "predicted_class_idx": 9,
+      "predicted_probability": 50.01,
+      "true_class_probability": 16.01,
+      "top3_predictions": [
+        {
+          "class": "Cucumber",
+          "prob_pct": 50.01
+        },
+        {
+          "class": "Pumpkin",
+          "prob_pct": 31.0
+        },
+        {
+          "class": "Bean",
+          "prob_pct": 16.01
+        }
+      ]
+    },
+    {
+      "sample_index": 289,
+      "filepath": "C:\\Users\\jagru\\.cache\\kagglehub\\datasets\\misrakahmed\\vegetable-image-dataset\\versions\\1\\Vegetable Images\\test\\Bitter_Gourd\\1290.jpg",
+      "filename": "1290.jpg",
+      "true_class": "Bitter_Gourd",
+      "true_class_idx": 1,
+      "predicted_class": "Broccoli",
+      "predicted_class_idx": 4,
+      "predicted_probability": 100.0,
+      "true_class_probability": 0.0,
+      "top3_predictions": [
+        {
+          "class": "Broccoli",
+          "prob_pct": 100.0
+        },
+        {
+          "class": "Cucumber",
+          "prob_pct": 0.0
+        },
+        {
+          "class": "Bitter_Gourd",
+          "prob_pct": 0.0
+        }
+      ]
+    },
+    {
+      "sample_index": 325,
+      "filepath": "C:\\Users\\jagru\\.cache\\kagglehub\\datasets\\misrakahmed\\vegetable-image-dataset\\versions\\1\\Vegetable Images\\test\\Bitter_Gourd\\1326.jpg",
+      "filename": "1326.jpg",
+      "true_class": "Bitter_Gourd",
+      "true_class_idx": 1,
+      "predicted_class": "Pumpkin",
+      "predicted_class_idx": 12,
+      "predicted_probability": 100.0,
+      "true_class_probability": 0.0,
+      "top3_predictions": [
+        {
+          "class": "Pumpkin",
+          "prob_pct": 100.0
+        },
+        {
+          "class": "Cucumber",
+          "prob_pct": 0.0
+        },
+        {
+          "class": "Potato",
+          "prob_pct": 0.0
+        }
+      ]
+    },
+    {
+      "sample_index": 2277,
+      "filepath": "C:\\Users\\jagru\\.cache\\kagglehub\\datasets\\misrakahmed\\vegetable-image-dataset\\versions\\1\\Vegetable Images\\test\\Potato\\1080.jpg",
+      "filename": "1080.jpg",
+      "true_class": "Potato",
+      "true_class_idx": 11,
+      "predicted_class": "Pumpkin",
+      "predicted_class_idx": 12,
+      "predicted_probability": 65.69,
+      "true_class_probability": 34.31,
+      "top3_predictions": [
+        {
+          "class": "Pumpkin",
+          "prob_pct": 65.69
+        },
+        {
+          "class": "Potato",
+          "prob_pct": 34.31
+        },
+        {
+          "class": "Carrot",
+          "prob_pct": 0.0
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   FileText,
   Info,
+  RotateCcw,
 } from 'lucide-react';
 import './App.css';
 
@@ -98,6 +99,24 @@ const PRESET_DISHES = [
   },
 ];
 
+const SUPPORTED_PRODUCE = [
+  'Bean',
+  'Bitter Gourd',
+  'Bottle Gourd',
+  'Brinjal',
+  'Broccoli',
+  'Cabbage',
+  'Capsicum',
+  'Carrot',
+  'Cauliflower',
+  'Cucumber',
+  'Papaya',
+  'Potato',
+  'Pumpkin',
+  'Radish',
+  'Tomato',
+];
+
 const API_BASE = 'http://127.0.0.1:8000';
 
 export default function App() {
@@ -131,13 +150,15 @@ export default function App() {
   const [diagnosticsLog, setDiagnosticsLog] = useState([]);
   const [runningDiag, setRunningDiag] = useState(false);
 
-  // Food Image Upload state (Phase 1)
+  // Food Image Upload state
   const fileInputRef = useRef(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadError, setUploadError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [showPhase2Notice, setShowPhase2Notice] = useState(false);
+  const [isAnalyzingUpload, setIsAnalyzingUpload] = useState(false);
+  const [uploadPrediction, setUploadPrediction] = useState(null);
 
   const currentDish = PRESET_DISHES.find((d) => d.id === selectedDishId) || PRESET_DISHES[0];
 
@@ -393,8 +414,9 @@ export default function App() {
   const handleProcessFile = (file) => {
     if (!file) return;
 
-    // Reset status and errors
+    // Reset status, predictions, and errors
     setUploadError('');
+    setUploadPrediction(null);
     setShowPhase2Notice(false);
 
     // Validate file type (must be image/*)
@@ -459,14 +481,56 @@ export default function App() {
     setPreviewUrl(null);
     setUploadedFile(null);
     setUploadError('');
+    setUploadPrediction(null);
     setShowPhase2Notice(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleAnalyzeClick = () => {
-    setShowPhase2Notice(true);
+  const handleAnalyzeClick = async () => {
+    if (!uploadedFile) {
+      setUploadError('No image selected. Please choose or drag an image first.');
+      return;
+    }
+
+    setIsAnalyzingUpload(true);
+    setUploadError('');
+    setUploadPrediction(null);
+    setShowPhase2Notice(false);
+
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/recognize-upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        let errorDetail = 'Failed to analyze uploaded image.';
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) {
+            errorDetail = errData.detail;
+          }
+        } catch {
+          errorDetail = `Inference failed with status ${res.status} (${res.statusText})`;
+        }
+        setUploadError(errorDetail);
+        return;
+      }
+
+      const data = await res.json();
+      setUploadPrediction(data);
+    } catch {
+      setUploadError(
+        'Unable to connect to the FoodVerse AI backend server. Please verify the FastAPI service is running at http://127.0.0.1:8000.'
+      );
+    } finally {
+      setIsAnalyzingUpload(false);
+    }
   };
 
   // Ratio for portion calculation in Nutrition tab
@@ -481,8 +545,8 @@ export default function App() {
             <Sparkles size={24} />
           </div>
           <div>
-            <div className="brand-title">FoodVerse AI</div>
-            <div className="brand-subtitle">Multimodal Intelligence Agent</div>
+            <div className="brand-title">Food Verse AI</div>
+            <div className="brand-subtitle">Produce Recognition & Quality Intelligence</div>
           </div>
         </div>
 
@@ -493,7 +557,7 @@ export default function App() {
             className={`nav-tab-btn ${activeTab === 'vision' ? 'active' : ''}`}
             onClick={() => setActiveTab('vision')}
           >
-            <Camera size={16} /> Vision Agent
+            <Camera size={16} /> Produce Identifier
           </button>
           <button
             id="tab-freshness-btn"
@@ -547,42 +611,28 @@ export default function App() {
         {/* Hero Banner */}
         <section className="hero-banner">
           <div className="hero-tag">
-            <Zap size={14} /> Phase 1 & 2 Live — Multimodal Food Intelligence
+            <Sparkles size={14} /> AI Produce Recognition
           </div>
           <h1 className="hero-headline">
-            Culinary Vision, Quality & Nutrition <span className="highlight-gradient">Powered by Agentic AI</span>
+            Food Verse AI — <span className="highlight-gradient">Produce Intelligence</span>
           </h1>
           <p className="hero-description">
-            Experience real-time dish recognition, deep freshness index auditing, macronutrient computation, and
-            conversational chef guidance in one cohesive interface.
+            Upload any fresh produce photo to recognize supported fruits and vegetables, view real-time model confidence scores, audit nutritional profiles, and check freshness.
           </p>
 
-          {/* Sample Dish Picker */}
-          <div className="sample-presets-container">
-            <div className="preset-title-label">Select Demo Food Sample for Live Multimodal Analysis</div>
-            <div className="sample-grid">
-              {PRESET_DISHES.map((dish) => (
-                <div
-                  key={dish.id}
-                  id={`preset-${dish.id}`}
-                  className={`sample-card ${selectedDishId === dish.id ? 'active' : ''}`}
-                  onClick={() => handleSelectDish(dish.id)}
-                >
-                  <img src={dish.image} alt={dish.name} className="sample-thumbnail" />
-                  <div className="sample-card-info">
-                    <h4>{dish.name}</h4>
-                    <p>{dish.subtitle}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* Supported Produce Scope Pill Bar */}
+          <div className="supported-scope-bar">
+            <span className="supported-scope-label">15 Supported Produce Classes:</span>
+            {SUPPORTED_PRODUCE.map((cls) => (
+              <span key={cls} className="supported-tag-pill">{cls}</span>
+            ))}
           </div>
         </section>
 
         {/* TAB 1: VISION & RECOGNITION */}
         {activeTab === 'vision' && (
           <section className="tab-panel-container">
-            {/* Upload Food Image Section (Phase 1) */}
+            {/* Primary Produce Recognition Section */}
             <section className="glass-card upload-food-section" id="upload-food-section" aria-label="Upload Food Image">
               <div className="upload-section-header">
                 <div className="upload-header-left">
@@ -590,13 +640,13 @@ export default function App() {
                     <UploadCloud size={20} />
                   </div>
                   <div>
-                    <h2 className="upload-section-title">Upload Food Image</h2>
+                    <h2 className="upload-section-title">Produce Image Recognition</h2>
                     <p className="upload-section-subtitle">
-                      Drag and drop or browse a food photo (PNG, JPG, WEBP up to 10 MB)
+                      Upload or drag a produce photo to identify with MobileNetV3-Large neural model
                     </p>
                   </div>
                 </div>
-                <span className="badge badge-emerald">Phase 1 Intake</span>
+                <span className="badge badge-emerald">MobileNetV3 Active</span>
               </div>
 
               {/* Real HTML file input with accept="image/*" */}
@@ -609,7 +659,7 @@ export default function App() {
                 onChange={handleFileInputChange}
               />
 
-              {/* Drag and Drop Zone (Visible when no image is loaded) */}
+              {/* STATE 1: No image selected */}
               {!previewUrl ? (
                 <div
                   id="upload-dropzone"
@@ -631,10 +681,10 @@ export default function App() {
                     <UploadCloud size={28} />
                   </div>
                   <div className="upload-drop-text">
-                    Drag and drop your food image here, or browse
+                    Drag and drop your produce image here, or browse
                   </div>
                   <div className="upload-drop-subtext">
-                    Supports PNG, JPG, JPEG, WEBP, GIF • Maximum 10 MB
+                    Supports PNG, JPG, JPEG, WEBP • Maximum 10 MB
                   </div>
                   <button
                     type="button"
@@ -645,11 +695,11 @@ export default function App() {
                       fileInputRef.current?.click();
                     }}
                   >
-                    <Upload size={16} /> Choose Image
+                    <Upload size={16} /> Upload Image
                   </button>
                 </div>
-              ) : (
-                /* Selected Image Preview & Metadata Card */
+              ) : !uploadPrediction ? (
+                /* STATE 2: Image selected & previewed (Before recognition) */
                 <div className="upload-preview-card" id="upload-preview-card">
                   <div className="upload-preview-media">
                     <img
@@ -672,7 +722,7 @@ export default function App() {
                       <span className="upload-spec-pill">
                         <ImageIcon size={13} /> {uploadedFile?.type || 'Image'}
                       </span>
-                      <span className="badge badge-emerald">Ready for Analysis</span>
+                      <span className="badge badge-emerald">Ready for Recognition</span>
                     </div>
 
                     <div className="upload-actions-row">
@@ -681,9 +731,29 @@ export default function App() {
                         id="analyze-food-btn"
                         className="btn-primary"
                         onClick={handleAnalyzeClick}
-                        title="Analyze uploaded food"
+                        disabled={isAnalyzingUpload}
+                        title="Identify produce with MobileNetV3-Large neural model"
                       >
-                        <Sparkles size={16} /> Analyze Food
+                        {isAnalyzingUpload ? (
+                          <>
+                            <RefreshCw size={16} className="spin-animation" /> Identifying Produce...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={16} /> Identify Produce
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        id="choose-image-btn"
+                        className="btn-secondary"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isAnalyzingUpload}
+                        title="Select a different image"
+                      >
+                        <Upload size={14} /> Change Image
                       </button>
 
                       <button
@@ -691,29 +761,206 @@ export default function App() {
                         id="remove-image-btn"
                         className="btn-danger-outline"
                         onClick={handleRemoveImage}
+                        disabled={isAnalyzingUpload}
                         title="Remove selected image and clear preview"
                       >
                         <Trash2 size={16} /> Remove Image
                       </button>
+                    </div>
+
+                    {showPhase2Notice && (
+                      <div className="phase2-notice-banner animate-fade-in" id="phase2-notice-banner">
+                        <Info size={18} color="var(--accent-cyan)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <span className="phase2-badge">Vision Active</span>
+                          <strong>AI analysis active.</strong> Multimodal neural inference is powered by the verified 15-class MobileNetV3-Large vision model.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* STATE 3: Successful prediction (Split view on desktop) */
+                <div className="prediction-split-layout">
+                  {/* Left Column: Image Preview & Control Actions */}
+                  <div className="prediction-image-pane" id="upload-preview-card">
+                    <div className="prediction-image-wrapper">
+                      <img
+                        src={previewUrl}
+                        alt={uploadedFile?.name || 'Selected produce preview'}
+                        className="upload-preview-img"
+                        id="upload-preview-img"
+                      />
+                    </div>
+
+                    <div className="prediction-image-meta">
+                      <div className="upload-file-title" id="selected-file-name">
+                        {uploadedFile?.name}
+                      </div>
+                      <div className="upload-file-specs">
+                        <span className="upload-spec-pill" id="selected-file-size">
+                          <FileText size={13} /> {formatFileSize(uploadedFile?.size)}
+                        </span>
+                        <span className="badge badge-emerald">Identified</span>
+                      </div>
+                    </div>
+
+                    <div className="upload-actions-row">
+                      <button
+                        type="button"
+                        id="try-another-image-btn"
+                        className="btn-primary"
+                        onClick={handleRemoveImage}
+                        title="Reset and analyze another produce image"
+                      >
+                        <RotateCcw size={15} /> Try Another Image
+                      </button>
 
                       <button
                         type="button"
+                        id="choose-image-btn"
                         className="btn-secondary"
-                        style={{ fontSize: '0.84rem', padding: '8px 14px' }}
                         onClick={() => fileInputRef.current?.click()}
                         title="Select a different image"
                       >
                         <Upload size={14} /> Change Image
                       </button>
+
+                      <button
+                        type="button"
+                        id="remove-image-btn"
+                        className="btn-danger-outline"
+                        onClick={handleRemoveImage}
+                        title="Clear image"
+                      >
+                        <Trash2 size={14} /> Clear
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Prediction Results Card */}
+                  <div className="upload-prediction-card animate-fade-in" id="upload-prediction-result" style={{ marginTop: 0 }}>
+                    <div className="prediction-header-bar">
+                      <div className="prediction-title-group">
+                        <span className="badge badge-emerald">
+                          <Sparkles size={12} /> Live MobileNetV3 Prediction
+                        </span>
+                        <h3 className="prediction-dish-name" id="predicted-class-name">
+                          {uploadPrediction.display_name}
+                        </h3>
+                        <span className="prediction-category-tag">
+                          {uploadPrediction.nutrition_profile?.category || 'Fresh Produce'} • {uploadPrediction.nutrition_profile?.cuisine || 'Raw Wholefood'}
+                        </span>
+                      </div>
+
+                      <div className="prediction-metrics-group">
+                        <div className="confidence-pill-wrapper">
+                          <span className="confidence-value-pill" id="predicted-confidence-pill">
+                            <Award size={14} /> {uploadPrediction.model_confidence_pct}% Confidence
+                          </span>
+                          <span className="confidence-note-disclaimer">
+                            *Model confidence score (evaluated on 3,000 held-out test images; not a guarantee of correctness).
+                          </span>
+                        </div>
+                        <div className="latency-badge">
+                          <Zap size={13} /> {uploadPrediction.inference_latency_ms} ms CPU Latency
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Phase 2 Informational Notice */}
-                    {showPhase2Notice && (
-                      <div className="phase2-notice-banner animate-fade-in" id="phase2-notice-banner">
-                        <Info size={18} color="var(--accent-cyan)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        <div>
-                          <span className="phase2-badge">Phase 2 Notice</span>
-                          <strong>AI analysis coming in Phase 2.</strong> Multimodal neural inference for custom uploaded food images is scheduled for Phase 2 integration. No simulated or fake predictions are generated for uploaded files.
+                    {/* Conservative Heuristic Uncertainty Advisory */}
+                    {uploadPrediction.advisory?.triggered && (
+                      <div className="prediction-heuristic-advisory animate-fade-in" id="prediction-heuristic-advisory">
+                        <AlertCircle size={18} color="var(--accent-amber)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div className="heuristic-advisory-content">
+                          <div className="heuristic-advisory-tag">
+                            <span className="badge badge-amber">Heuristic Advisory</span>
+                            <span className="heuristic-tag-text">{uploadPrediction.advisory.reason}</span>
+                          </div>
+                          <p className="heuristic-advisory-message">
+                            {uploadPrediction.advisory.message}
+                          </p>
+                          <div className="heuristic-advisory-tip">
+                            <strong>Recommendation:</strong> {uploadPrediction.advisory.recommendation}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Top-3 distribution breakdown */}
+                    {uploadPrediction.top3_predictions && uploadPrediction.top3_predictions.length > 0 && (
+                      <div className="top3-container" id="prediction-top3-distribution">
+                        <div className="top3-title">
+                          <TrendingUp size={14} /> Class Confidence Distribution (Top 3):
+                        </div>
+                        <div className="top3-bars-list">
+                          {uploadPrediction.top3_predictions.map((item, idx) => (
+                            <div key={idx} className="top3-bar-item">
+                              <div className="top3-label-row">
+                                <span className="top3-class-name">
+                                  #{idx + 1} {item.display_name}
+                                </span>
+                                <span className="top3-pct">{item.confidence}%</span>
+                              </div>
+                              <div className="top3-progress-track">
+                                <div
+                                  className="top3-progress-fill"
+                                  style={{
+                                    width: `${Math.max(item.confidence, 1.5)}%`,
+                                    background: idx === 0 ? 'var(--gradient-emerald)' : 'rgba(148, 163, 184, 0.45)',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nutritional & Freshness Intelligence Grid */}
+                    {uploadPrediction.nutrition_profile && (
+                      <div className="prediction-details-grid">
+                        <div className="macro-chip">
+                          <span className="macro-chip-label">Energy</span>
+                          <span className="macro-chip-value">{uploadPrediction.nutrition_profile.calories} kcal</span>
+                          <span className="macro-chip-sub">per 100g</span>
+                        </div>
+                        <div className="macro-chip">
+                          <span className="macro-chip-label">Protein</span>
+                          <span className="macro-chip-value">{uploadPrediction.nutrition_profile.protein_g}g</span>
+                          <span className="macro-chip-sub">plant amino acids</span>
+                        </div>
+                        <div className="macro-chip">
+                          <span className="macro-chip-label">Carbs</span>
+                          <span className="macro-chip-value">{uploadPrediction.nutrition_profile.carbs_g}g</span>
+                          <span className="macro-chip-sub">clean carbs</span>
+                        </div>
+                        <div className="macro-chip">
+                          <span className="macro-chip-label">Dietary Fiber</span>
+                          <span className="macro-chip-value">{uploadPrediction.nutrition_profile.fiber_g}g</span>
+                          <span className="macro-chip-sub">digestive fiber</span>
+                        </div>
+                        <div className="macro-chip">
+                          <span className="macro-chip-label">Freshness Index</span>
+                          <span className="macro-chip-value" style={{ color: 'var(--accent-emerald)' }}>
+                            {uploadPrediction.nutrition_profile.freshness_score}/100
+                          </span>
+                          <span className="macro-chip-sub">Grade {uploadPrediction.nutrition_profile.health_score}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Culinary & Storage Advisory */}
+                    {uploadPrediction.nutrition_profile?.chef_note && (
+                      <div className="prediction-chef-advisory">
+                        <div className="chef-advisory-title">
+                          <ChefHat size={14} color="#166534" /> Culinary & Storage Advisory
+                        </div>
+                        <p className="chef-advisory-text">
+                          {uploadPrediction.nutrition_profile.chef_note}
+                        </p>
+                        <div className="shelf-life-note">
+                          <Clock size={13} /> {uploadPrediction.nutrition_profile.shelf_life_note}
                         </div>
                       </div>
                     )}
@@ -721,114 +968,153 @@ export default function App() {
                 </div>
               )}
 
-              {/* Validation Error Banner */}
+              {/* Validation / Network Error Banner with Retry */}
               {uploadError && (
                 <div className="upload-error-banner animate-fade-in" id="upload-error-banner">
-                  <AlertCircle size={18} style={{ flexShrink: 0 }} />
-                  <span>{uploadError}</span>
+                  <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <span>{uploadError}</span>
+                    {uploadedFile && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{ fontSize: '0.8rem', padding: '4px 12px', background: '#ffffff' }}
+                        onClick={handleAnalyzeClick}
+                        disabled={isAnalyzingUpload}
+                      >
+                        <RefreshCw size={13} className={isAnalyzingUpload ? 'spin-animation' : ''} /> Retry Recognition
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </section>
 
-            <div className="preset-title-label" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layers size={14} /> Explore Multimodal Reference Samples
-            </div>
+            {/* Reference Samples & Demo Explorer (Preserved & Accessible, Non-competing) */}
+            <section className="demo-section-wrapper" aria-label="Explore Reference Samples">
+              <div className="preset-title-label">
+                <Layers size={15} /> Reference Library & Demo Samples
+              </div>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '-0.25rem' }}>
+                Select a benchmark sample below to inspect multimodal intelligence in Freshness, Nutrition, and Chef AI.
+              </p>
 
-            <div className="dashboard-grid">
-              {/* Left Column: Image with AI Scanner Overlay */}
-              <div className="glass-card vision-showcase-box">
-                <div className="image-preview-wrapper">
-                  <img src={currentDish.image} alt={currentDish.name} className="preview-image" />
-                  {isScanning && <div className="vision-scan-overlay" />}
-                  <div className="confidence-tag-overlay">
-                    <CheckCircle2 size={16} />
-                    <span>{currentDish.confidence}% Confidence</span>
-                  </div>
-                </div>
-
-                <div className="meta-pill-row">
-                  <span className="badge badge-emerald">Cuisine: {currentDish.cuisine}</span>
-                  <span className="badge badge-cyan">Freshness: {currentDish.freshnessScore}/100</span>
-                  <span className="badge badge-amber">{currentDish.calories} kcal / serving</span>
-                  <span className="badge badge-purple">Nutri-Grade: A</span>
+              {/* Sample Dish Picker */}
+              <div className="sample-presets-container">
+                <div className="sample-grid">
+                  {PRESET_DISHES.map((dish) => (
+                    <div
+                      key={dish.id}
+                      id={`preset-${dish.id}`}
+                      className={`sample-card ${selectedDishId === dish.id ? 'active' : ''}`}
+                      onClick={() => handleSelectDish(dish.id)}
+                    >
+                      <img src={dish.image} alt={dish.name} className="sample-thumbnail" />
+                      <div className="sample-card-info">
+                        <h4>{dish.name}</h4>
+                        <p>{dish.subtitle}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Right Column: Identified Details */}
-              <div className="glass-card details-panel">
-                <div className="panel-header">
+              <div className="dashboard-grid">
+                {/* Left Column: Image with AI Scanner Overlay */}
+                <div className="glass-card vision-showcase-box">
+                  <div className="image-preview-wrapper">
+                    <img src={currentDish.image} alt={currentDish.name} className="preview-image" />
+                    {isScanning && <div className="vision-scan-overlay" />}
+                    <div className="confidence-tag-overlay">
+                      <CheckCircle2 size={16} />
+                      <span>{currentDish.confidence}% Confidence</span>
+                    </div>
+                  </div>
+
+                  <div className="meta-pill-row">
+                    <span className="badge badge-emerald">Cuisine: {currentDish.cuisine}</span>
+                    <span className="badge badge-cyan">Freshness: {currentDish.freshnessScore}/100</span>
+                    <span className="badge badge-amber">{currentDish.calories} kcal / serving</span>
+                    <span className="badge badge-purple">Nutri-Grade: A</span>
+                  </div>
+                </div>
+
+                {/* Right Column: Identified Details */}
+                <div className="glass-card details-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h2 className="panel-title">{currentDish.name}</h2>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        Multimodal Neural Recognition Engine
+                      </p>
+                    </div>
+                    <span className="badge badge-emerald">Verified</span>
+                  </div>
+
+                  {/* Macro summary */}
                   <div>
-                    <h2 className="panel-title">{currentDish.name}</h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      Multimodal Neural Recognition Engine
-                    </p>
-                  </div>
-                  <span className="badge badge-emerald">Verified</span>
-                </div>
-
-                {/* Macro summary */}
-                <div>
-                  <div className="preset-title-label">Nutritional Snapshot</div>
-                  <div className="macro-grid">
-                    <div className="macro-box">
-                      <div className="macro-num">{currentDish.calories}</div>
-                      <div className="macro-label">Calories</div>
-                    </div>
-                    <div className="macro-box">
-                      <div className="macro-num">{currentDish.protein}g</div>
-                      <div className="macro-label">Protein</div>
-                    </div>
-                    <div className="macro-box">
-                      <div className="macro-num">{currentDish.carbs}g</div>
-                      <div className="macro-label">Carbs</div>
-                    </div>
-                    <div className="macro-box">
-                      <div className="macro-num">{currentDish.fat}g</div>
-                      <div className="macro-label">Fats</div>
+                    <div className="preset-title-label">Nutritional Snapshot</div>
+                    <div className="macro-grid">
+                      <div className="macro-box">
+                        <div className="macro-num">{currentDish.calories}</div>
+                        <div className="macro-label">Calories</div>
+                      </div>
+                      <div className="macro-box">
+                        <div className="macro-num">{currentDish.protein}g</div>
+                        <div className="macro-label">Protein</div>
+                      </div>
+                      <div className="macro-box">
+                        <div className="macro-num">{currentDish.carbs}g</div>
+                        <div className="macro-label">Carbs</div>
+                      </div>
+                      <div className="macro-box">
+                        <div className="macro-num">{currentDish.fat}g</div>
+                        <div className="macro-label">Fats</div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Identified Ingredients */}
-                <div>
-                  <div className="preset-title-label">Identified Ingredients ({currentDish.ingredients.length})</div>
-                  <div className="ingredients-list">
-                    {currentDish.ingredients.map((ing, i) => (
-                      <span key={i} className="ingredient-chip">
-                        • {ing}
-                      </span>
-                    ))}
+                  {/* Identified Ingredients */}
+                  <div>
+                    <div className="preset-title-label">Identified Ingredients ({currentDish.ingredients.length})</div>
+                    <div className="ingredients-list">
+                      {currentDish.ingredients.map((ing, i) => (
+                        <span key={i} className="ingredient-chip">
+                          • {ing}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Chef's Insight */}
-                <div className="chef-quote-card">
-                  "{currentDish.chefQuote}"
-                </div>
+                  {/* Chef's Insight */}
+                  <div className="chef-quote-card">
+                    "{currentDish.chefQuote}"
+                  </div>
 
-                {/* Quick Action Navigation */}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem' }}>
-                  <button
-                    className="btn-primary"
-                    onClick={() => setActiveTab('freshness')}
-                  >
-                    <Apple size={16} /> Audit Freshness
-                  </button>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => setActiveTab('nutrition')}
-                  >
-                    <Activity size={16} /> Detailed Nutrition
-                  </button>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => setActiveTab('chef')}
-                  >
-                    <ChefHat size={16} /> Chef Assistant
-                  </button>
+                  {/* Quick Action Navigation */}
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem' }}>
+                    <button
+                      className="btn-primary"
+                      onClick={() => setActiveTab('freshness')}
+                    >
+                      <Apple size={16} /> Audit Freshness
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setActiveTab('nutrition')}
+                    >
+                      <Activity size={16} /> Detailed Nutrition
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setActiveTab('chef')}
+                    >
+                      <ChefHat size={16} /> Chef Assistant
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
           </section>
         )}
 
